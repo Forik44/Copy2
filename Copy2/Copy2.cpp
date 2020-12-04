@@ -19,7 +19,7 @@ struct BytesArray
 
 int k = 100000;
 
-void AddBytes(BytesArray* list, char* bytes)
+void AddBytes(BytesArray* list, char* bytes, int l)
 {
 	if (list->size == 0)
 	{
@@ -30,7 +30,7 @@ void AddBytes(BytesArray* list, char* bytes)
 		tmp->next = nullptr;
 		list->first = tmp;
 		list->last = list->first;
-		list->size += 1;
+		list->size += l;
 		
 	}
 	else
@@ -38,7 +38,7 @@ void AddBytes(BytesArray* list, char* bytes)
 		Node* tmp = new Node;
 		tmp->data = bytes;
 		tmp->next = nullptr;
-		list->size += 1;
+		list->size += l;
 		list->last->next = tmp;
 		list->last = tmp;
 		
@@ -46,7 +46,30 @@ void AddBytes(BytesArray* list, char* bytes)
 	}
 	
 }
+void WriteBytes(Node* data, int size, char* next)
+{
+	fstream dstfs;
+	dstfs.open(next, ios_base::app | ios_base::binary);
+	if (dstfs.is_open())
+	{
+		int count = 0;
+		Node* marker = data;
+		do
+		{
 
+			if (marker->next->next == nullptr)
+				dstfs.write(marker->data, size - count);
+			else
+				dstfs.write(marker->data, k);
+			marker = marker->next;
+			count += k;
+		} while (marker->next != nullptr);
+	}
+	else
+	{
+		cout << "File isnt open";
+	}
+}
 int main(int argc, char* argv[])
 {
 	setlocale(LC_ALL, "Russian");
@@ -81,34 +104,17 @@ int main(int argc, char* argv[])
 			if (0 < sizef - count && sizef - count < k)
 			{
 				srcfs.read(buffer, sizef - count + 1);
-				AddBytes(arr, buffer);
+				AddBytes(arr, buffer, sizef - count);
 			}
 			else
 			{
 				srcfs.read(buffer, k);
-				AddBytes(arr, buffer);
+				AddBytes(arr, buffer, k);
 			}
 			
 			count += k;
 		}
-		dstfs.open(next, ios_base::app | ios_base::binary);
-		if (dstfs.is_open())
-		{
-			Node* marker = arr->first;
-			do
-			{
-				
-				if (marker->next->next == nullptr)
-					dstfs.write(marker->data, sizef - count + 2*k);
-				else
-					dstfs.write(marker->data, k);
-				marker = marker->next;
-			} while (marker->next != nullptr);
-		}
-		else
-		{
-			cout << "File isnt open";
-		}
+		WriteBytes(arr->first, arr->size, next);
 	
 		delete arr;
 		srcfs.close();
