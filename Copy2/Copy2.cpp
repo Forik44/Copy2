@@ -4,22 +4,24 @@
 using namespace std;
 
 #define Data char
+int count1 = 0;
+int sizef = 0;
 struct Node
 {
 	Data *data = nullptr;
 	Node* next = nullptr;
 };
 
-struct BytesArray
+struct BytesList
 {
 	Node* last = nullptr;
 	Node *first = nullptr;
 	size_t size = 0;
 };
 
-int k = 100000;
+int k = 5;
 
-void AddBytes(BytesArray* list, char* bytes, int l)
+void AddBytes(BytesList* list, char* bytes, int l)
 {
 	if (list->size == 0)
 	{
@@ -30,7 +32,7 @@ void AddBytes(BytesArray* list, char* bytes, int l)
 		tmp->next = nullptr;
 		list->first = tmp;
 		list->last = list->first;
-		list->size += l;
+		list->size += 1;
 		
 	}
 	else
@@ -38,7 +40,7 @@ void AddBytes(BytesArray* list, char* bytes, int l)
 		Node* tmp = new Node;
 		tmp->data = bytes;
 		tmp->next = nullptr;
-		list->size += l;
+		list->size += 1;
 		list->last->next = tmp;
 		list->last = tmp;
 		
@@ -46,24 +48,38 @@ void AddBytes(BytesArray* list, char* bytes, int l)
 	}
 	
 }
-void WriteBytes(Node* data, int size, char* next)
+char* getData(Node* marker)
+{
+	return marker->data;
+}
+Node* moveNext(Node* marker)
+{
+	 return marker->next;
+	
+}
+bool canMoveNext(Node* marker)
+{
+	return marker->next != nullptr;
+}
+
+void WriteBytes(const BytesList* array, const char* next)
 {
 	fstream dstfs;
 	dstfs.open(next, ios_base::app | ios_base::binary);
 	if (dstfs.is_open())
 	{
-		int count = 0;
-		Node* marker = data;
-		do
+		Node* marker = array->first;
+		while(1)
 		{
-
-			if (marker->next->next == nullptr)
-				dstfs.write(marker->data, size - count);
+			if (canMoveNext(marker))
+				dstfs.write(getData(marker), k);
 			else
-				dstfs.write(marker->data, k);
-			marker = marker->next;
-			count += k;
-		} while (marker->next != nullptr);
+				dstfs.write(getData(marker), sizef - count1 + k);
+			if (canMoveNext(marker))
+				marker = moveNext(marker);
+			else
+				break;
+		}
 	}
 	else
 	{
@@ -89,22 +105,22 @@ int main(int argc, char* argv[])
 	dstfs.close();
 	if (srcfs.is_open())
 	{
-		BytesArray* arr = new BytesArray;
+		BytesList* arr = new BytesList;
 		arr->first = nullptr;
 		arr->last = nullptr;
 		arr->size = 0;
-		
-		int count = 0;
+				
 		srcfs.seekg(0, ios_base::end);
-		int sizef = srcfs.tellg();
+		sizef = srcfs.tellg();
 		srcfs.seekg(0);
+		count1 = 0;
 		while (!srcfs.eof())
 		{
 			char* buffer = new char[k];
-			if (0 < sizef - count && sizef - count < k)
+			if (0 <= sizef - count1 && sizef - count1 < k)
 			{
-				srcfs.read(buffer, sizef - count + 1);
-				AddBytes(arr, buffer, sizef - count);
+				srcfs.read(buffer, sizef - count1	+ 1);
+				AddBytes(arr, buffer, sizef - count1);
 			}
 			else
 			{
@@ -112,9 +128,9 @@ int main(int argc, char* argv[])
 				AddBytes(arr, buffer, k);
 			}
 			
-			count += k;
+			count1 += k;
 		}
-		WriteBytes(arr->first, arr->size, next);
+		WriteBytes(arr, next);
 	
 		delete arr;
 		srcfs.close();
